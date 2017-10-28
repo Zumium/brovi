@@ -33,8 +33,8 @@ func NewBroviCam(devfile string) *BroviCamBuilder {
 	builder := new(BroviCamBuilder)
 	builder.config = &C.BroviCamConfig{
 		devfile: C.CString(devfile),
-		width:   720, //DEFAULT VALUE
-		height:  576, //DEFAULT VALUE
+		width:   640, //DEFAULT VALUE
+		height:  480, //DEFAULT VALUE
 	}
 	return builder
 }
