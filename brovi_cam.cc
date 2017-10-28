@@ -48,11 +48,11 @@ void KBroviCam::SetFormat(int width, int height)
     v4l2_format fmt;
     memset(&fmt, 0, sizeof(fmt));
     fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-    fmt.fmt.pix.width = config->width;
-    fmt.fmt.pix.height = config->height;
+    fmt.fmt.pix.width = width;
+    fmt.fmt.pix.height = height;
     fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUYV;
     fmt.fmt.pix.field = V4L2_FIELD_INTERLACED;
-    if (ioctl(fd, VIDIO_S_FMT, &fmt) == -1)
+    if (ioctl(fd, VIDIOC_S_FMT, &fmt) == -1)
     {
         throw BroviCamOpenException();
     }
@@ -64,13 +64,13 @@ void KBroviCam::RequestBuffers()
     req.count = VIDEO_BUFFER_NUMBER;
     req.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     req.memory = V4L2_MEMORY_MMAP;
-    if (ioctl(fd, VIDIO_REQBUFS, &req) < 0)
+    if (ioctl(fd, VIDIOC_REQBUFS, &req) < 0)
     {
         throw BroviCamOpenException();
     }
 }
 
-KBroviCam::QueryBuffers()
+void KBroviCam::QueryBuffers()
 {
     v4l2_buffer buf;
     for (int i = 0; i < VIDEO_BUFFER_NUMBER; i++)
@@ -79,7 +79,7 @@ KBroviCam::QueryBuffers()
         buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         buf.memory = V4L2_MEMORY_MMAP;
         buf.index = i;
-        if (ioctl(fd, VIDIO_QUERYBUF, &buf) < 0)
+        if (ioctl(fd, VIDIOC_QUERYBUF, &buf) < 0)
         {
             throw BroviCamOpenException();
         }
@@ -89,7 +89,7 @@ KBroviCam::QueryBuffers()
         {
             throw BroviCamOpenException();
         }
-        if (ioctl(fd, VIDIO_QBUF, &buf) < 0)
+        if (ioctl(fd, VIDIOC_QBUF, &buf) < 0)
         {
             throw BroviCamOpenException();
         }
