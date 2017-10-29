@@ -171,7 +171,9 @@ BroviCam *BroviCam_Open(BroviCamConfig *config)
 
 void BroviCam_Close(BroviCam *bc)
 {
-    static_cast<KBroviCam *>(bc)->Close();
+    KBroviCam *kbc = static_cast<KBroviCam *>(bc);
+    kbc->Close();
+    delete kbc;
 }
 
 int BroviCam_Start(BroviCam *bc)
