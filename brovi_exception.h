@@ -25,6 +25,6 @@ class BroviCamStopException : std::exception
     {
         return "Cannot stop video stream";
     }
-}
+};
 
 #endif
