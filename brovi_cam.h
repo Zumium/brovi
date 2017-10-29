@@ -23,6 +23,9 @@ typedef void BroviCam;
 
 BroviCam *BroviCam_Open(BroviCamConfig *);
 void BroviCam_Close(BroviCam *);
+int BroviCam_Start(BroviCam *);
+int BroviCam_Stop(BroviCam *);
+VideoBuffer *BroviCam_NextBuffer(BroviCam *);
 
 #ifdef __cplusplus
 }

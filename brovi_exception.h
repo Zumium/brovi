@@ -27,4 +27,12 @@ class BroviCamStopException : std::exception
     }
 };
 
+class BroviCamNextBufferException : std::exception
+{
+    const char *what() const throw() override
+    {
+        return "Cannot fetch next buffer";
+    }
+};
+
 #endif

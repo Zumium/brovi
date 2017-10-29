@@ -17,10 +17,12 @@ class KBroviCam
     void Close();
     void Start();
     void Stop();
+    VideoBuffer *NextBuffer();
 
   private:
     int fd;
     VideoBuffer *buffers;
+    int next_buffer_index = 0;
 
     void OpenCamera(const char *);
     void SetFormat(int width, int height);
@@ -132,6 +134,21 @@ void KBroviCam::Stop()
     }
 }
 
+VideoBuffer *KBroviCam::NextBuffer()
+{
+    v4l2_buffer buf;
+    memset(&buf, 0, sizeof(buf));
+    buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    buf.memory = V4L2_MEMORY_MMAP;
+    buf.index = next_buffer_index;
+    if (ioctl(fd, VIDIOC_DQBUF, VIDIOC_DQBUF, &buf) < 0)
+    {
+        throw BroviCamNextBufferException();
+    }
+    next_buffer_index = (next_buffer_index + 1) & VIDEO_BUFFER_NUMBER;
+    return &buffers[buf.index];
+}
+
 //---------------------------------------------
 
 BroviCam *BroviCam_Open(BroviCamConfig *config)
@@ -148,7 +165,44 @@ BroviCam *BroviCam_Open(BroviCamConfig *config)
 
 void Brovi_Close(BroviCam *bc)
 {
-    KBroviCam *kbc = static_cast<KBroviCam *>(bc);
-    kbc->Close();
+    static_cast<KBroviCam *>(bc)->Close();
     delete bc;
+}
+
+int BroviCam_Start(BroviCam *bc)
+{
+    try
+    {
+        static_cast<KBroviCam *>(bc)->Start();
+        return 0;
+    }
+    catch (BroviCamStartException &e)
+    {
+        return -1;
+    }
+}
+
+int BroviCam_Stop(BroviCam *bc)
+{
+    try
+    {
+        static_cast<KBroviCam *>(bc)->Stop();
+        return 0;
+    }
+    catch (BroviCamStopException &e)
+    {
+        return -1;
+    }
+}
+
+VideoBuffer *BroviCam_NextBuffer(BroviCam *bc)
+{
+    try
+    {
+        return static_cast<KBroviCam *>(bc)->NextBuffer();
+    }
+    catch (BroviCamNextBufferException &e)
+    {
+        return nullptr;
+    }
 }
