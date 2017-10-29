@@ -9,12 +9,6 @@
 
 #define VIDEO_BUFFER_NUMBER 4
 
-struct VideoBuffer
-{
-    void *start;
-    std::size_t length;
-};
-
 class KBroviCam
 {
   public:
