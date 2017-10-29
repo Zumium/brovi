@@ -11,4 +11,20 @@ class BroviCamOpenException : public std::exception
     }
 };
 
+class BroviCamStartException : public std::exception
+{
+    const char *what() const throw() override
+    {
+        return "Cannot start video stream";
+    }
+};
+
+class BroviCamStopException : std::exception
+{
+    const char *what() const throw() override
+    {
+        return "Cannot stop video stream";
+    }
+}
+
 #endif

@@ -19,8 +19,10 @@ class KBroviCam
 {
   public:
     explicit KBroviCam(BroviCamConfig *);
-    ~KBroviCam();
+    ~KBroviCam() noexcept;
     void Close();
+    void Start();
+    void Stop();
 
   private:
     int fd;
@@ -104,8 +106,12 @@ KBroviCam::KBroviCam(BroviCamConfig *config) : buffers(new VideoBuffer[VIDEO_BUF
     QueryBuffers();
 }
 
-KBroviCam::~KBroviCam()
+KBroviCam::~KBroviCam() noexcept
 {
+    for (int i = 0; i < VIDEO_BUFFER_NUMBER; i++)
+    {
+        munmap(buffers[i].start, buffers[i].length);
+    }
     delete[] buffers;
 }
 
@@ -114,11 +120,36 @@ void KBroviCam::Close()
     close(fd);
 }
 
+void KBroviCam::Start()
+{
+    v4l2_buf_type type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    if (ioctl(fd, VIDIOC_STREAMON, &type) < 0)
+    {
+        throw BroviCamStartException();
+    }
+}
+
+void KBroviCam::Stop()
+{
+    v4l2_buf_type type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    if (ioctl(fd, VIDIOC_STREAMOFF, &type) < 0)
+    {
+        throw BroviCamStopException();
+    }
+}
+
 //---------------------------------------------
 
 BroviCam *BroviCam_Open(BroviCamConfig *config)
 {
-    return static_cast<BroviCam *>(new KBroviCam(config));
+    try
+    {
+        return static_cast<BroviCam *>(new KBroviCam(config));
+    }
+    catch (BroviCamOpenException &e)
+    {
+        return nullptr;
+    }
 }
 
 void Brovi_Close(BroviCam *bc)
