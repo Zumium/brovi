@@ -1,11 +1,11 @@
 #include <fcntl.h>
 #include <cstring>
 #include <unistd.h>
-#include <sys/ioctl.h>
 #include <linux/videodev2.h>
 #include <sys/mman.h>
 #include "brovi_cam.h"
 #include "brovi_exception.h"
+#include "xioctl.h"
 
 #define VIDEO_BUFFER_NUMBER 4
 
@@ -17,12 +17,12 @@ class KBroviCam
     void Close();
     void Start();
     void Stop();
-    VideoBuffer *NextBuffer();
+    VideoBufferStatus NextBufferA();
+    void NextBufferB(VideoBufferStatus);
 
   private:
     int fd;
     VideoBuffer *buffers;
-    int next_buffer_index = 0;
 
     void OpenCamera(const char *);
     void SetFormat(int width, int height);
@@ -50,7 +50,7 @@ void KBroviCam::SetFormat(int width, int height)
     fmt.fmt.pix.height = height;
     fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUYV;
     fmt.fmt.pix.field = V4L2_FIELD_INTERLACED;
-    if (ioctl(fd, VIDIOC_S_FMT, &fmt) == -1)
+    if (xioctl(fd, VIDIOC_S_FMT, &fmt) == -1)
     {
         throw BroviCamOpenException();
     }
@@ -62,7 +62,7 @@ void KBroviCam::RequestBuffers()
     req.count = VIDEO_BUFFER_NUMBER;
     req.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     req.memory = V4L2_MEMORY_MMAP;
-    if (ioctl(fd, VIDIOC_REQBUFS, &req) < 0)
+    if (xioctl(fd, VIDIOC_REQBUFS, &req) < 0)
     {
         throw BroviCamOpenException();
     }
@@ -77,7 +77,7 @@ void KBroviCam::QueryBuffers()
         buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         buf.memory = V4L2_MEMORY_MMAP;
         buf.index = i;
-        if (ioctl(fd, VIDIOC_QUERYBUF, &buf) < 0)
+        if (xioctl(fd, VIDIOC_QUERYBUF, &buf) < 0)
         {
             throw BroviCamOpenException();
         }
@@ -87,7 +87,7 @@ void KBroviCam::QueryBuffers()
         {
             throw BroviCamOpenException();
         }
-        if (ioctl(fd, VIDIOC_QBUF, &buf) < 0)
+        if (xioctl(fd, VIDIOC_QBUF, &buf) < 0)
         {
             throw BroviCamOpenException();
         }
@@ -119,7 +119,7 @@ void KBroviCam::Close()
 void KBroviCam::Start()
 {
     v4l2_buf_type type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-    if (ioctl(fd, VIDIOC_STREAMON, &type) < 0)
+    if (xioctl(fd, VIDIOC_STREAMON, &type) < 0)
     {
         throw BroviCamStartException();
     }
@@ -128,25 +128,31 @@ void KBroviCam::Start()
 void KBroviCam::Stop()
 {
     v4l2_buf_type type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-    if (ioctl(fd, VIDIOC_STREAMOFF, &type) < 0)
+    if (xioctl(fd, VIDIOC_STREAMOFF, &type) < 0)
     {
         throw BroviCamStopException();
     }
 }
 
-VideoBuffer *KBroviCam::NextBuffer()
+VideoBufferStatus KBroviCam::NextBufferA()
 {
     v4l2_buffer buf;
     memset(&buf, 0, sizeof(buf));
     buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     buf.memory = V4L2_MEMORY_MMAP;
-    buf.index = next_buffer_index;
-    if (ioctl(fd, VIDIOC_DQBUF, VIDIOC_DQBUF, &buf) < 0)
+    if (xioctl(fd, VIDIOC_DQBUF, &buf) < 0)
     {
         throw BroviCamNextBufferException();
     }
-    next_buffer_index = (next_buffer_index + 1) & VIDEO_BUFFER_NUMBER;
-    return &buffers[buf.index];
+    return VideoBufferStatus{buffer : &buffers[buf.index], v4l_buf : buf};
+}
+
+void KBroviCam::NextBufferB(VideoBufferStatus status)
+{
+    if (xioctl(fd, VIDIOC_QBUF, &status.v4l_buf) < 0)
+    {
+        throw BroviCamNextBufferException();
+    }
 }
 
 //---------------------------------------------
@@ -194,14 +200,27 @@ int BroviCam_Stop(BroviCam *bc)
     }
 }
 
-VideoBuffer *BroviCam_NextBuffer(BroviCam *bc)
+VideoBufferStatus BroviCam_NextBufferA(BroviCam *bc)
 {
     try
     {
-        return static_cast<KBroviCam *>(bc)->NextBuffer();
+        return static_cast<KBroviCam *>(bc)->NextBufferA();
     }
     catch (BroviCamNextBufferException &e)
     {
-        return nullptr;
+        return VideoBufferStatus{buffer : nullptr};
+    }
+}
+
+int BroviCam_NextBufferB(BroviCam *bc, VideoBufferStatus status)
+{
+    try
+    {
+        static_cast<KBroviCam *>(bc)->NextBufferB(status);
+        return 0;
+    }
+    catch (BroviCamNextBufferException &e)
+    {
+        return -1;
     }
 }
