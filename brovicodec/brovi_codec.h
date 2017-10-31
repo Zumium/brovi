@@ -1,11 +1,12 @@
 #ifndef _BROVI_CODEC
 #define _BROVI_CODEC
-#define BROVI_CODEC_ENCODE_ERR -1
-#define BROVI_CODEC_ZERO_SIZE_ERR -2
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+const int BROVI_CODEC_ENCODE_ERR = -1;
+const int BROVI_CODEC_ZERO_SIZE_ERR = -2;
 
 typedef struct
 {

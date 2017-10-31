@@ -1,5 +1,5 @@
-#include <x264.h>
 #include <cstdint>
+#include <x264.h>
 #include "brovi_codec.h"
 #include "brovi_codec_exception.h"
 
@@ -9,11 +9,11 @@ class KBroviCodec
     explicit KBroviCodec(BroviCodecConfig);
     ~KBroviCodec();
     H264Frame EncodeFrame(void *);
-    H264Frame FlushDelayedFrame();
+    int FlushDelayedFrame(H264Frame *);
 
   private:
     const int width = 640, height = 480; //with defaults
-    constexpr int PixelNum()
+    const int PixelNum() const
     {
         return width * height;
     }
@@ -82,19 +82,19 @@ H264Frame KBroviCodec::EncodeFrame(void *frame)
     return H264Frame{data : nal->p_payload, size : frame_size};
 }
 
-H264Frame KBroviCodec::FlushDelayedFrame()
+int KBroviCodec::FlushDelayedFrame(H264Frame *out)
 {
-    H264Frame out_frame{};
-    if (x264_encoder_delayed_frames(h))
+    int ret = x264_encoder_delayed_frames(h);
+    if (ret)
     {
-        out_frame.size = x264_encoder_encode(h, &nal, &i_nal, nullptr, &pic_out);
-        if (out_frame.size < 0)
+        out->size = x264_encoder_encode(h, &nal, &i_nal, nullptr, &pic_out);
+        if (out->size < 0)
             throw BroviCodecEncodeException();
-        else if (!out_frame.size)
+        else if (!out->size)
             throw BroviCodecZeroFrameSizeException();
-        out_frame.data = nal->p_payload;
+        out->data = nal->p_payload;
     }
-    return out_frame;
+    return ret;
 }
 
 //-------------------------------------------------------------------------
@@ -139,8 +139,7 @@ int BroviCodec_FlushDelayedFrame(BroviCodec *bc, H264Frame *out)
 {
     try
     {
-        *out = static_cast<KBroviCodec *>(bc)->FlushDelayedFrame();
-        return 0;
+        return static_cast<KBroviCodec *>(bc)->FlushDelayedFrame(out);
     }
     catch (BroviCodecEncodeException &e)
     {
