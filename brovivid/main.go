@@ -24,7 +24,7 @@ func main() {
 	codec, err := brovicodec.New(func(d []byte) {
 		fmt.Printf("%d bytes from codec\n", len(d))
 		file.Write(d)
-	}).SetWidth(640).SetHeight(480).Build()
+	}).Build()
 	if err != nil {
 		reportError(err)
 		return

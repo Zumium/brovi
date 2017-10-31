@@ -98,7 +98,10 @@ type Builder struct {
 
 //New creates a new builder to help construct a new codec
 func New(cb EncodedFrameCallback) *Builder {
-	return &Builder{cb: cb}
+	builder := &Builder{cb: cb}
+	builder.config.width = C.int(640)
+	builder.config.height = C.int(480)
+	return builder
 }
 
 //SetWidth sets the frame's width

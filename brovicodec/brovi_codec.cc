@@ -12,7 +12,7 @@ class KBroviCodec
     int FlushDelayedFrame(H264Frame *);
 
   private:
-    const int width = 640, height = 480; //with defaults
+    const int width, height; //with defaults
     const int PixelNum() const
     {
         return width * height;
