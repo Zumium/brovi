@@ -1,2 +1,4 @@
 package: github.com/Zumium/brovi
-import: []
+import:
+- package: github.com/gorilla/websocket
+  version: ^1.2.0
