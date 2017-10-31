@@ -39,7 +39,7 @@ KBroviCodec::KBroviCodec(BroviCodecConfig config) : width(config.width), height(
     param.b_repeat_headers = 1;
     param.b_annexb = 1;
 
-    if (x264_param_apply_profile(&param, "high") < 0)
+    if (x264_param_apply_profile(&param, "high422") < 0)
         throw BroviCodecInitException();
 
     if (x264_picture_alloc(&pic_in, param.i_csp, param.i_width, param.i_height) < 0)
@@ -61,7 +61,7 @@ H264Frame KBroviCodec::EncodeFrame(void *frame)
     int index_y = 0, index_u = 0, index_v = 0;
     uint8_t *in = static_cast<uint8_t *>(frame);
     uint8_t *y = pic_in.img.plane[0], *u = pic_in.img.plane[1], *v = pic_in.img.plane[2];
-    const int num = PixelNum() * 2 / 4;
+    const int num = PixelNum() * 2;
 
     for (int i = 0; i < num; i += 4)
     {
