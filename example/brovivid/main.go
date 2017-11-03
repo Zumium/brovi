@@ -21,7 +21,7 @@ func main() {
 	}
 	defer file.Close()
 
-	codec, err := brovicodec.New(func(d []byte) {
+	codec, err := brovicodec.NewBuilder(func(d []byte) {
 		fmt.Printf("%d bytes from codec\n", len(d))
 		file.Write(d)
 	}).Build()
@@ -31,17 +31,17 @@ func main() {
 	}
 	defer codec.Close()
 
-	broviCam, err := brovicam.NewBroviCam("/dev/video0", func(d []byte) {
-		fmt.Printf("%d bytes from camera\n", len(d))
-		codec.Write(d)
-	}).Open()
+	broviCam, err := brovicam.NewBuilder("/dev/video0").Open()
 	if err != nil {
 		reportError(err)
 		return
 	}
 	defer broviCam.Close()
 
-	if err := broviCam.Start(); err != nil {
+	if err := broviCam.Start(func(d []byte) {
+		fmt.Printf("%d bytes from camera\n", len(d))
+		codec.Write(d)
+	}); err != nil {
 		reportError(err)
 		return
 	}

@@ -1,7 +1,7 @@
 package brovicam
 
 /*
-#cgo CPPFLAGS: -std=c++11 -I.
+#cgo CPPFLAGS: -std=c++11
 
 #include "brovi_cam.h"
 */
@@ -18,6 +18,8 @@ var (
 	ErrStopFail = errors.New("failed to stop")
 	//ErrGetNextBufferFail 获取下一帧失败
 	ErrGetNextBufferFail = errors.New("failed to get next buffer")
+	//ErrEmptyCallBack 回调函数为设置
+	ErrEmptyCallBack = errors.New("callback function has been left unset")
 )
 
 //FrameCallback deal with frame bytes
@@ -30,8 +32,8 @@ type BroviCam struct {
 	broviCam *C.BroviCam
 }
 
-func newBroviCam(config *C.BroviCamConfig, cb FrameCallback) (*BroviCam, error) {
-	bc := &BroviCam{exitSig: make(chan struct{}), cb: cb}
+func newBroviCam(config *C.BroviCamConfig) (*BroviCam, error) {
+	bc := &BroviCam{exitSig: make(chan struct{})}
 	if bc.broviCam = (*C.BroviCam)(C.BroviCam_Open(config)); bc.broviCam == nil {
 		return nil, ErrOpenCamFail
 	}
@@ -40,16 +42,14 @@ func newBroviCam(config *C.BroviCamConfig, cb FrameCallback) (*BroviCam, error) 
 
 //Close closes the camera file and destroys underlying dependency
 func (bc *BroviCam) Close() {
+	close(bc.exitSig)
 	C.BroviCam_Close(unsafe.Pointer(bc.broviCam))
 }
 
 //Start starts the video stream
-func (bc *BroviCam) Start() error {
-	if int(C.BroviCam_Start(unsafe.Pointer(bc.broviCam))) < 0 {
-		return ErrStartFail
-	}
-	go bc.stream()
-	return nil
+func (bc *BroviCam) Start(cb FrameCallback) error {
+	bc.cb = cb
+	return bc.start()
 }
 
 //Stop stops the video stream
@@ -62,7 +62,7 @@ func (bc *BroviCam) Stop() error {
 }
 
 //OneFrame is FOR TEST ONLY!!!
-func (bc *BroviCam) OneFrame() error {
+func (bc *BroviCam) OneFrame(cb FrameCallback) error {
 	if int(C.BroviCam_Start(unsafe.Pointer(bc.broviCam))) < 0 {
 		return ErrStartFail
 
@@ -72,11 +72,22 @@ func (bc *BroviCam) OneFrame() error {
 		return ErrGetNextBufferFail
 		// return errors.New("failed to dequeue buffer")
 	}
-	bc.cb(C.GoBytes(status.buffer.start, C.int(status.buffer.length)))
+	cb(C.GoBytes(status.buffer.start, C.int(status.buffer.length)))
 	C.BroviCam_NextBufferB(unsafe.Pointer(bc.broviCam), status)
 	if int(C.BroviCam_Stop(unsafe.Pointer(bc.broviCam))) < 0 {
 		return ErrStopFail
 	}
+	return nil
+}
+
+func (bc *BroviCam) start() error {
+	if bc.cb == nil {
+		return ErrEmptyCallBack
+	}
+	if int(C.BroviCam_Start(unsafe.Pointer(bc.broviCam))) < 0 {
+		return ErrStartFail
+	}
+	go bc.stream()
 	return nil
 }
 
@@ -100,13 +111,11 @@ func (bc *BroviCam) stream() {
 //Builder the builder to build new BroviCam
 type Builder struct {
 	config *C.BroviCamConfig
-	cb     FrameCallback
 }
 
-//NewBroviCam creates a new builder
-func NewBroviCam(devfile string, cb FrameCallback) *Builder {
+//NewBuilder creates a new builder
+func NewBuilder(devfile string) *Builder {
 	builder := new(Builder)
-	builder.cb = cb
 	builder.config = &C.BroviCamConfig{
 		devfile: C.CString(devfile),
 		width:   640, //DEFAULT VALUE
@@ -117,7 +126,7 @@ func NewBroviCam(devfile string, cb FrameCallback) *Builder {
 
 //Open builds the actual BroviCam object and start intializing process
 func (builder *Builder) Open() (*BroviCam, error) {
-	return newBroviCam(builder.config, builder.cb)
+	return newBroviCam(builder.config)
 }
 
 //SetWidth overwrites the width setting

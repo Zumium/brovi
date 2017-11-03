@@ -96,8 +96,8 @@ type Builder struct {
 	cb     EncodedFrameCallback
 }
 
-//New creates a new builder to help construct a new codec
-func New(cb EncodedFrameCallback) *Builder {
+//NewBuilder creates a new builder to help construct a new codec
+func NewBuilder(cb EncodedFrameCallback) *Builder {
 	builder := &Builder{cb: cb}
 	builder.config.width = C.int(640)
 	builder.config.height = C.int(480)

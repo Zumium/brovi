@@ -19,16 +19,16 @@ func main() {
 	}
 	defer file.Close()
 
-	bc, err := brovicam.NewBroviCam(os.Args[1], func(frame []byte) {
-		n, _ := file.Write(frame)
-		fmt.Printf("write %d bytes\n", n)
-	}).Open()
+	bc, err := brovicam.NewBuilder(os.Args[1]).Open()
 	if err != nil {
 		reportError(err)
 	}
 	defer bc.Close()
 
-	if err := bc.OneFrame(); err != nil {
+	if err := bc.OneFrame(func(frame []byte) {
+		n, _ := file.Write(frame)
+		fmt.Printf("write %d bytes\n", n)
+	}); err != nil {
 		reportError(err)
 	}
 }
