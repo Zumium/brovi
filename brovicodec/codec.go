@@ -27,6 +27,8 @@ type BroviCodec struct {
 	alive   bool
 }
 
+//constructor:
+
 func newCodec(config C.BroviCodecConfig, cb EncodedFrameCallback) (*BroviCodec, error) {
 	codec := &BroviCodec{
 		in:      make(chan []byte),
@@ -41,6 +43,8 @@ func newCodec(config C.BroviCodecConfig, cb EncodedFrameCallback) (*BroviCodec, 
 	go codec.process()
 	return codec, nil
 }
+
+//public:
 
 //Write implements io.Writer interface
 func (c *BroviCodec) Write(p []byte) (n int, err error) {
@@ -60,6 +64,8 @@ func (c *BroviCodec) Close() (err error) {
 	C.BroviCodec_Close(unsafe.Pointer(c.codec))
 	return
 }
+
+//private:
 
 func (c *BroviCodec) process() {
 	ctnu := true
@@ -96,6 +102,8 @@ type Builder struct {
 	cb     EncodedFrameCallback
 }
 
+//builder constructor:
+
 //NewBuilder creates a new builder to help construct a new codec
 func NewBuilder(cb EncodedFrameCallback) *Builder {
 	builder := &Builder{cb: cb}
@@ -103,6 +111,8 @@ func NewBuilder(cb EncodedFrameCallback) *Builder {
 	builder.config.height = C.int(480)
 	return builder
 }
+
+//public -- optional settings
 
 //SetWidth sets the frame's width
 func (b *Builder) SetWidth(width int) *Builder {
@@ -115,6 +125,8 @@ func (b *Builder) SetHeight(height int) *Builder {
 	b.config.height = C.int(height)
 	return b
 }
+
+//public -- build target
 
 //Build finishes the setting and build a BroviCodec instance
 func (b *Builder) Build() (*BroviCodec, error) {

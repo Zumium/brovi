@@ -32,6 +32,8 @@ type BroviCam struct {
 	broviCam *C.BroviCam
 }
 
+//constructor:
+
 func newBroviCam(config *C.BroviCamConfig) (*BroviCam, error) {
 	bc := &BroviCam{exitSig: make(chan struct{})}
 	if bc.broviCam = (*C.BroviCam)(C.BroviCam_Open(config)); bc.broviCam == nil {
@@ -39,6 +41,8 @@ func newBroviCam(config *C.BroviCamConfig) (*BroviCam, error) {
 	}
 	return bc, nil
 }
+
+//public:
 
 //Close closes the camera file and destroys underlying dependency
 func (bc *BroviCam) Close() {
@@ -80,6 +84,8 @@ func (bc *BroviCam) OneFrame(cb FrameCallback) error {
 	return nil
 }
 
+//private:
+
 func (bc *BroviCam) start() error {
 	if bc.cb == nil {
 		return ErrEmptyCallBack
@@ -113,6 +119,8 @@ type Builder struct {
 	config *C.BroviCamConfig
 }
 
+//builder constructor
+
 //NewBuilder creates a new builder
 func NewBuilder(devfile string) *Builder {
 	builder := new(Builder)
@@ -124,10 +132,14 @@ func NewBuilder(devfile string) *Builder {
 	return builder
 }
 
+//build target
+
 //Open builds the actual BroviCam object and start intializing process
 func (builder *Builder) Open() (*BroviCam, error) {
 	return newBroviCam(builder.config)
 }
+
+//public -- optional settings
 
 //SetWidth overwrites the width setting
 func (builder *Builder) SetWidth(width int) *Builder {
