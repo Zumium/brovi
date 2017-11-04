@@ -30,7 +30,7 @@ func main() {
 
 	streamDuplicator := server.NewStreamDuplicator()
 
-	broviCodec, err := brovicodec.NewBuilder(streamDuplicator.Inputer()).SetWidth(640).SetHeight(480).Build()
+	broviCodec, err := brovicodec.NewBuilder(brovicodec.EncodedFrameCallback(streamDuplicator.Inputer())).SetWidth(640).SetHeight(480).Build()
 	if err != nil {
 		reportErr(err)
 		os.Exit(1)
