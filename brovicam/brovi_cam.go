@@ -8,6 +8,7 @@ package brovicam
 import "C"
 import "errors"
 import "unsafe"
+import "io"
 
 var (
 	//ErrOpenCamFail 打开摄像头失败
@@ -51,10 +52,29 @@ func (bc *BroviCam) Close() error {
 	return nil
 }
 
-//Start starts the video stream
-func (bc *BroviCam) Start(cb FrameCallback) error {
+//Pipe sets the callback function to write output data to a Writer
+func (bc *BroviCam) Pipe(out io.Writer) {
+	bc.cb = func(d []byte) {
+		out.Write(d)
+	}
+}
+
+//StartWithCallback starts the video stream with the given callback function
+func (bc *BroviCam) StartWithCallback(cb FrameCallback) error {
 	bc.cb = cb
-	return bc.start()
+	return bc.Start()
+}
+
+//Start starts the video stream
+func (bc *BroviCam) Start() error {
+	if bc.cb == nil {
+		return ErrEmptyCallBack
+	}
+	if int(C.BroviCam_Start(unsafe.Pointer(bc.broviCam))) < 0 {
+		return ErrStartFail
+	}
+	go bc.stream()
+	return nil
 }
 
 //Stop stops the video stream
@@ -86,17 +106,6 @@ func (bc *BroviCam) OneFrame(cb FrameCallback) error {
 }
 
 //private:
-
-func (bc *BroviCam) start() error {
-	if bc.cb == nil {
-		return ErrEmptyCallBack
-	}
-	if int(C.BroviCam_Start(unsafe.Pointer(bc.broviCam))) < 0 {
-		return ErrStartFail
-	}
-	go bc.stream()
-	return nil
-}
 
 func (bc *BroviCam) stream() {
 	for {

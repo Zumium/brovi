@@ -38,7 +38,7 @@ func main() {
 	}
 	defer broviCam.Close()
 
-	if err := broviCam.Start(func(d []byte) {
+	if err := broviCam.StartWithCallback(func(d []byte) {
 		fmt.Printf("%d bytes from camera\n", len(d))
 		codec.Write(d)
 	}); err != nil {

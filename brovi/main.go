@@ -42,9 +42,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := broviCam.Start(func(d []byte) {
-		broviCodec.Write(d)
-	}); err != nil {
+	broviCam.Pipe(broviCodec)
+	if err := broviCam.Start(); err != nil {
 		reportErr(err)
 		os.Exit(1)
 	}
