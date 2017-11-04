@@ -45,9 +45,10 @@ func newBroviCam(config *C.BroviCamConfig) (*BroviCam, error) {
 //public:
 
 //Close closes the camera file and destroys underlying dependency
-func (bc *BroviCam) Close() {
+func (bc *BroviCam) Close() error {
 	close(bc.exitSig)
 	C.BroviCam_Close(unsafe.Pointer(bc.broviCam))
+	return nil
 }
 
 //Start starts the video stream
