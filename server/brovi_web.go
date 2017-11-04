@@ -2,7 +2,6 @@ package server
 
 import (
 	"fmt"
-	"io"
 
 	"github.com/Zumium/brovi/cfg"
 	"github.com/labstack/echo"
@@ -13,8 +12,8 @@ const defaultListenAddr = "0.0.0.0"
 var e = echo.New()
 
 //Init initializes the web service
-func Init(stream io.ReadCloser) error {
-	e.GET("/live", liveStreamHandler(stream))
+func Init(duplicator *StreamDuplicator) error {
+	e.GET("/live", liveStreamHandler(duplicator))
 	return nil
 }
 
