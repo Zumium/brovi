@@ -2,6 +2,8 @@ package server
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/Zumium/brovi/cfg"
 	"github.com/labstack/echo"
@@ -13,7 +15,15 @@ var e = echo.New()
 
 //Init initializes the web service
 func Init(duplicator *StreamDuplicator) error {
-	e.Static("/", "static")
+	execPath, err := os.Executable()
+	if err != nil {
+		return err
+	}
+	absExecPath, err := filepath.Abs(execPath)
+	if err != nil {
+		return err
+	}
+	e.Static("/", filepath.Join(absExecPath, "static"))
 	e.GET("/live", liveStreamHandler(duplicator))
 	return nil
 }
