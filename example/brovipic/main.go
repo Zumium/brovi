@@ -13,13 +13,13 @@ func reportError(err error) {
 }
 
 func main() {
-	file, err := os.Create(os.Args[2])
+	file, err := os.Create(os.Args[1])
 	if err != nil {
 		reportError(err)
 	}
 	defer file.Close()
 
-	bc, err := brovicam.NewBuilder(os.Args[1]).Open()
+	bc, err := brovicam.NewBuilder("/dev/video0").Open()
 	if err != nil {
 		reportError(err)
 	}
