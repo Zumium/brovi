@@ -6,8 +6,8 @@ import (
 
 //Init initializes the config system
 func Init() error {
-	viper.SetEnvPrefix("brovi")
 	viper.AutomaticEnv()
+	viper.SetEnvPrefix("BROVI")
 	return nil
 }
 

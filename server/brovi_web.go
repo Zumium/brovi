@@ -19,11 +19,7 @@ func Init(duplicator *StreamDuplicator) error {
 	if err != nil {
 		return err
 	}
-	absExecPath, err := filepath.Abs(execPath)
-	if err != nil {
-		return err
-	}
-	e.Static("/", filepath.Join(absExecPath, "static"))
+	e.Static("/", filepath.Join(filepath.Dir(execPath), "static"))
 	e.GET("/live", liveStreamHandler(duplicator))
 	return nil
 }
