@@ -13,6 +13,7 @@ var e = echo.New()
 
 //Init initializes the web service
 func Init(duplicator *StreamDuplicator) error {
+	e.Static("/", "static")
 	e.GET("/live", liveStreamHandler(duplicator))
 	return nil
 }
