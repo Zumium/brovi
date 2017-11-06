@@ -32,7 +32,7 @@ KBroviCodec::KBroviCodec(BroviCodecConfig config) : width(config.width), height(
     if (x264_param_default_preset(&param, "medium", nullptr) < 0)
         throw BroviCodecInitException();
 
-    param.i_csp = X264_CSP_YV16;
+    param.i_csp = X264_CSP_I422;
     param.i_width = width;
     param.i_height = height;
     param.b_vfr_input = 0;
